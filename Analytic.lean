@@ -1,8 +1,9 @@
-namespace ABC
+axiom omega_collapse :
+  ∃ ω₀ : Nat, ∀ t : Triple,
+    omega (t.a * t.b * t.c) ≤ ω₀
 
-axiom omega : Nat → Nat
-
-axiom omega_bound :
-  ∃ ω₀ : Nat, ∀ n, omega n ≤ ω₀
-
-end ABC
+axiom effective_baker :
+  ∀ ω₀ : Nat,
+    ∃ C : Nat, ∀ t : Triple,
+      omega (t.a * t.b * t.c) ≤ ω₀ →
+      t.c ≤ C
