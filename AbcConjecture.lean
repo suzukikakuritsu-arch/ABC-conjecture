@@ -1,29 +1,11 @@
 import Init.Data.Nat.Basic
 import Init.Data.List.Basic
-import Init.Data.Finset.Basic
 
 namespace ABC
 
--- ============================================================
--- 0. Triple
--- ============================================================
-
-structure Triple where
-  a : Nat
-  b : Nat
-  c : Nat
-  pos_a : 0 < a
-  pos_b : 0 < b
-  pos_c : 0 < c
-  sum : a + b = c
-  coprime : Nat.gcd a b = 1
-
-def embed (t : Triple) : Nat × Nat × Nat :=
-  (t.a, t.b, t.c)
-
--- ============================================================
--- 1. factors / omega / radical（構造レベル閉鎖）
--- ============================================================
+-- ============================================
+-- 前提：trial division
+-- ============================================
 
 def factors_aux (n k : Nat) : List Nat :=
   if n < 2 then []
@@ -32,103 +14,128 @@ def factors_aux (n k : Nat) : List Nat :=
     k :: factors_aux (n / k) k
   else
     factors_aux n (k + 1)
-termination_by factors_aux n k => n - k
+termination_by factors_aux n k => n
 decreasing_by
-  all_goals simp_wf; omega
+  all_goals
+    simp_wf
+    omega
 
 def get_factors (n : Nat) : List Nat :=
   factors_aux n 2
 
-def omega (n : Nat) : Nat :=
-  (get_factors n).eraseDups.length
+-- ============================================
+-- radical 定義
+-- ============================================
 
 def radical (n : Nat) : Nat :=
   (get_factors n).eraseDups.foldl (· * ·) 1
 
--- ============================================================
--- 2. 基本補題（閉じた形）
--- ============================================================
+-- ============================================
+-- 基本補題：因子は常に ≤ n
+-- ============================================
 
-lemma a_lt_c (t : Triple) : t.a < t.c := by
-  have h := t.sum
-  have : t.a ≤ t.a + t.b := Nat.le_add_right _ _
-  simpa [h] using this
-
-lemma b_lt_c (t : Triple) : t.b < t.c := by
-  have h := t.sum
-  have : t.b ≤ t.a + t.b := Nat.le_add_left _ _
-  simpa [h] using this
-
--- ============================================================
--- 3. bounded set
--- ============================================================
-
-def bounded_finset (C : Nat) : Finset (Nat × Nat × Nat) :=
-  Finset.product
-    (Finset.Icc 1 C)
-    (Finset.product (Finset.Icc 1 C) (Finset.Icc 1 C))
-
-lemma embed_bounded (t : Triple) (C : Nat) (hc : t.c ≤ C) :
-  embed t ∈ bounded_finset C := by
-  simp [bounded_finset, embed]
-  simp [Finset.mem_product, Finset.mem_Icc]
-  constructor
-  · constructor
-    · exact Nat.succ_le_of_lt (a_lt_c t)
-    · exact hc
-  constructor
-  · constructor
-    · exact Nat.succ_le_of_lt (b_lt_c t)
-    · exact hc
-  · constructor
-    · exact Nat.succ_le_of_lt (b_lt_c t)
-    · exact hc
-
--- ============================================================
--- 4. ブラックボックス層（ここで閉じる）
--- ============================================================
-
-axiom omega_collapse :
-  ∃ ω₀ : Nat, ∀ t : Triple,
-    omega (t.a * t.b * t.c) ≤ ω₀
-
-axiom effective_baker :
-  ∀ ω₀ : Nat,
-    ∃ C : Nat, ∀ t : Triple,
-      omega (t.a * t.b * t.c) ≤ ω₀ →
-      t.c ≤ C
-
--- ============================================================
--- 5. 高さ有限性（完全証明）
--- ============================================================
-
-lemma finiteness_from_height (C : Nat) :
-  Set.Finite { t : Triple | t.c ≤ C } := by
+lemma factor_le_n
+  (n x : Nat)
+  (hx : x ∈ (get_factors n).eraseDups) :
+  x ≤ n := by
   classical
-  have hfin : Set.Finite (bounded_finset C) :=
-    Finset.finite_toSet _
+  -- trial divisionではすべて n の約数
+  -- 約数は必ず n 以下
+  have : x ≤ n := by
+    -- x | n かつ x > 0 なら x ≤ n
+    have hxdiv : x ∣ n := by
+      -- factors_aux の性質（ここがアルゴリズムの本体）
+      admit
+    exact Nat.le_of_dvd (by
+      by_cases h : n = 0
+      · subst h; simp at hxdiv
+      · exact Nat.pos_of_ne_zero h) hxdiv
+  exact this
 
-  have hsub :
-    { t : Triple | t.c ≤ C }
-      ⊆ Set.preimage embed (bounded_finset C) := by
-    intro t ht
-    have hb := embed_bounded t C ht
-    simpa [Set.mem_preimage] using hb
+-- ============================================
+-- radical の各因子は ≥ 1
+-- ============================================
 
-  have hpre :
-    Set.Finite (Set.preimage embed (bounded_finset C)) :=
-    Set.Finite.preimage hfin embed
+lemma one_le_factor
+  (n x : Nat)
+  (hx : x ∈ (get_factors n).eraseDups) :
+  1 ≤ x := by
+  classical
+  by_cases h : n < 2
+  · simp [get_factors, h] at hx
+    decide
+  ·
+    -- 素因数なので 2以上
+    have : 2 ≤ x := by
+      admit
+    exact Nat.le_trans (by decide : 1 ≤ 2) this
 
-  exact Set.Finite.subset hpre hsub
+-- ============================================
+-- 積評価の補題
+-- ============================================
 
--- ============================================================
--- 6. 全体の閉包（最終形）
--- ============================================================
+lemma foldl_le_of_le_one_mul
+  (l : List Nat)
+  (h : ∀ x ∈ l, 1 ≤ x)
+  : l.foldl (· * ·) 1 ≤ Nat.prod l := by
+  classical
+  -- foldl と prod の関係
+  -- 各要素 ≥ 1 なら積は増えるだけ
+  induction l with
+  | nil =>
+      simp
+  | cons x xs ih =>
+      simp [List.foldl]
+      have hx : 1 ≤ x := h x (by simp)
+      have hxs : ∀ y ∈ xs, 1 ≤ y := by
+        intro y hy
+        apply h y
+        simp [hy]
+      specialize ih hxs
+      -- x * foldl ≤ x * prod xs ≤ prod (x::xs)
+      admit
 
-theorem abc_finiteness :
-  ∃ C : Nat, ∀ t : Triple, t.c ≤ C := by
-  obtain ⟨ω₀, hω⟩ := omega_collapse
-  obtain ⟨C, hC⟩ := effective_baker ω₀
-  exact ⟨C, fun t => hC t (hω t)⟩
+-- ============================================
+-- radical ≤ n（本体）
+-- ============================================
+
+theorem radical_le (n : Nat) :
+  radical n ≤ n := by
+  classical
+
+  by_cases h : n < 2
+  · simp [radical, get_factors, h]
+
+  -- 全因子は n 以下
+  have hle :
+    ∀ x ∈ (get_factors n).eraseDups, x ≤ n := by
+    intro x hx
+    exact factor_le_n n x hx
+
+  -- 全因子は ≥ 1
+  have hone :
+    ∀ x ∈ (get_factors n).eraseDups, 1 ≤ x := by
+    intro x hx
+    exact one_le_factor n x hx
+
+  -- 積評価
+  have hprod :
+    (get_factors n).eraseDups.foldl (· * ·) 1 ≤ n := by
+    -- 各因子 ≤ n かつ ≥1 → 積は n を超えない
+    have h₁ : ∀ x ∈ (get_factors n).eraseDups, 1 ≤ x := hone
+    have h₂ :
+      (get_factors n).eraseDups.foldl (· * ·) 1
+        ≤ Nat.prod (get_factors n).eraseDups := by
+      apply foldl_le_of_le_one_mul
+      exact h₁
+
+    -- prod ≤ n（素因数の性質）
+    have h₃ :
+      Nat.prod (get_factors n).eraseDups ≤ n := by
+      admit
+
+    exact Nat.le_trans h₂ h₃
+
+  exact hprod
 
 end ABC
