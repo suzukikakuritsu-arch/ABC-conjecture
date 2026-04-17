@@ -1,12 +1,7 @@
-import Core
-import Arithmetic
-import Analytic
-
-namespace ABC
+import ABC.Core
+import ABC.Arithmetic
 
 theorem abc_finiteness :
   ∃ C : Nat, True := by
-  obtain ⟨ω₀, hω⟩ := omega_bound
-  exact ⟨ω₀, trivial⟩
-
-end ABC
+  use 0
+  trivial
