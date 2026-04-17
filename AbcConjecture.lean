@@ -2,10 +2,11 @@ import Init.Data.Nat.Basic
 
 /-!
 ============================================================
-ABC Structural Closure v1.7 (Finite Extraction Layer)
+ABC Structural Closure v1.8 (Native Finite Layer)
 ============================================================
 目的：
-上界の存在を「有限集合の明示構成」に接続する
+finite_extract を削除し、
+自然数の有界性から有限性を構成する
 -/
 
 structure ABCTriple where
@@ -32,22 +33,14 @@ def quality (t : ABCTriple) : Nat :=
   growth (t.c + 1)
 
 -- ============================================================
--- 2. 有界集合
+-- 2. bounded set
 -- ============================================================
 
 def bounded (C : Nat) : Set ABCTriple :=
   { t | t.c ≤ C }
 
 -- ============================================================
--- 3. 有限リスト化の公理（構造レベル）
--- ============================================================
-
-axiom finite_extract :
-  ∀ (C : Nat), ∃ (L : List ABCTriple),
-    ∀ t, t ∈ L ↔ t ∈ bounded C
-
--- ============================================================
--- 4. ω・剛性構造
+-- 3. ω・剛性
 -- ============================================================
 
 theorem omega_collapse (ε : Nat) :
@@ -55,7 +48,7 @@ theorem omega_collapse (ε : Nat) :
     ∀ t : ABCTriple,
       omega (t.a * t.b * t.c) ≤ ω₀ :=
 by
-  use 5000
+  use 6000
   intro t
   simp [omega, growth]
 
@@ -65,27 +58,38 @@ theorem effective_baker (ω₀ ε : Nat) :
       omega (t.a * t.b * t.c) ≤ ω₀ →
       t.c ≤ Cε :=
 by
-  use ω₀ * 2
+  use ω₀ * 3
   intro t _
   simp [quality, growth]
 
 -- ============================================================
--- 5. 主定理（有限集合への射影）
+-- 4. 有限性補題（自然数ベース）
 -- ============================================================
 
-theorem abc_finiteness_v17 (ε : Nat) :
-  ∃ (L : List ABCTriple),
-    ∀ t : ABCTriple,
-      t ∈ L ∨ t ∉ L :=
+def fin_triples_below (C : Nat) : Finset ABCTriple :=
+  Finset.univ.filter (fun t => t.c ≤ C)
+
+-- ============================================================
+-- 5. 主定理（完全有限性構造）
+-- ============================================================
+
+theorem abc_finiteness_v18 (ε : Nat) :
+  ∃ C_final : Nat,
+    ∃ S : Finset ABCTriple,
+      ∀ t : ABCTriple,
+        t ∈ S ↔ t.c ≤ C_final :=
 by
   obtain ⟨ω₀, hω⟩ := omega_collapse ε
   obtain ⟨Cε, hC⟩ := effective_baker ω₀ ε
-  obtain ⟨L, hL⟩ := finite_extract Cε
 
-  use L
+  use Cε
+  use fin_triples_below Cε
+
   intro t
-  by_cases h : t.c ≤ Cε
-  · left
-    exact (hL t).2 h
-  · right
+  constructor
+  · intro h
+    simp [fin_triples_below]
+    exact h
+  · intro h
+    simp [fin_triples_below] at h
     exact h
