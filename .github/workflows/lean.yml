@@ -17,12 +17,7 @@ jobs:
           curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: Download Mathlib Cache
-        run: |
-          # 依存関係を解決せずに、まずキャッシュの取得を試みる
-          lake exe cache get
-
+      # Mathlibを使わないので cache get は不要
       - name: Build project
         run: |
-          # キャッシュがあればここは一瞬で終わるはず
           lake build
