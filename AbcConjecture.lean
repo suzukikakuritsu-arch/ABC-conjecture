@@ -1,44 +1,70 @@
 import Init.Data.Nat.Basic
 
+/-!
+# ABC Conjecture Formalization: Refinement Phase v1.1.1
+mathlib接続前提の構造安定版
+-/
+
+set_option compiler.extract_closed false
+
 -- ============================================================
--- ABC Conjecture: Structural Finiteness Framework
+-- 1. 素因数分解の構造化（stub + 構造安定化）
 -- ============================================================
 
--- 1. 基本的な型と関数の定義
--- ------------------------------------------------------------
+def primeFactors (n : Nat) : List Nat :=
+if n ≤ 1 then [] else sorry
 
--- 抽象的な型を「計算対象外」として定義
-opaque Real : Type
+def radical (n : Nat) : Nat :=
+let pf := primeFactors n
+let uniq := pf.eraseDups
+uniq.foldl (· * ·) 1
 
--- 全てを noncomputable (非計算) に設定し、コード生成を回避する
-noncomputable axiom Real_inhabited : Inhabited Real
-noncomputable instance : Inhabited Real := Real_inhabited
+def omega (n : Nat) : Nat :=
+let pf := primeFactors n
+pf.eraseDups.length
 
-opaque Real_le : Real → Real → Prop
-noncomputable instance : LE Real := ⟨Real_le⟩
-
-noncomputable axiom toReal : Nat → Real
-noncomputable axiom logReal : Real → Real
-
--- 2. ABCトリプルの構造
--- ------------------------------------------------------------
+-- ============================================================
+-- 2. ABC triple
+-- ============================================================
 
 structure ABCTriple where
   a : Nat
   b : Nat
   c : Nat
-  pos_c : c > 0
+  pos_a : 0 < a
+  pos_b : 0 < b
+  eq_sum : a + b = c
+  coprime : Nat.gcd a b = 1
 
--- radical と omega を性質として定義
-axiom radical : Nat → Nat
-axiom omega : Nat → Nat
+-- ============================================================
+-- 3. Real abstraction layer（最小修正）
+-- ============================================================
 
--- インスタンスからデフォルト値を取得（sorryを排除）
-noncomputable def quality (_t : ABCTriple) : Real :=
-  default
+opaque Real : Type
 
--- 3. 核心的な公理 (次元の壁と剛性)
--- ------------------------------------------------------------
+noncomputable axiom Real_inhabited : Inhabited Real
+instance : Inhabited Real := Real_inhabited
+
+opaque Real_le : Real → Real → Prop
+instance : LE Real := ⟨Real_le⟩
+
+noncomputable axiom toReal : Nat → Real
+noncomputable axiom logReal : Real → Real
+noncomputable axiom divReal : Real → Real → Real
+
+-- ============================================================
+-- 4. Quality
+-- ============================================================
+
+noncomputable def quality (t : ABCTriple) : Real :=
+let abc := t.a * t.b * t.c
+divReal
+  (logReal (toReal t.c))
+  (logReal (toReal (radical abc)))
+
+-- ============================================================
+-- 5. Core axioms（構造安定化）
+-- ============================================================
 
 axiom omega_collapse (ε : Real) :
   ∃ (ω₀ : Nat), ∀ (t : ABCTriple),
@@ -49,22 +75,22 @@ axiom effective_baker (ω₀ : Nat) (ε : Real) :
     omega (t.a * t.b * t.c) ≤ ω₀ →
     t.c ≤ Cε
 
--- 4. 主定理：実効的ABC有限性の論理的帰着
--- ------------------------------------------------------------
+-- ============================================================
+-- 6. Main theorem（構造整合版）
+-- ============================================================
 
-/-- 
-Leanがこの定理を承認したことは、
-「次元の壁」と「剛性」さえあれば、ABC予想の有限性は論理的に必然であることを意味します。
--/
 theorem abc_finiteness_logic (ε : Real) :
-  ∃ (C_final : Nat), ∀ (t : ABCTriple) ,
+  ∃ (C_final : Nat), ∀ (t : ABCTriple),
     t.c ≤ C_final := by
-  -- 1. 次元の壁
+  classical
+
   obtain ⟨ω₀, hω⟩ := omega_collapse ε
-  -- 2. 剛性
   obtain ⟨Cε, hC⟩ := effective_baker ω₀ ε
-  -- 3. 結論
+
   exact ⟨Cε, fun t => hC t (hω t)⟩
 
--- 証明の成功をログに出力
+-- ============================================================
+-- 7. sanity check
+-- ============================================================
+
 #print abc_finiteness_logic
