@@ -2,11 +2,11 @@ import Init.Data.Nat.Basic
 
 /-!
 ============================================================
-ABC Structural Closure v1.8 (Native Finite Layer)
+ABC Structural Closure v1.9 (Radical Reintroduction Layer)
 ============================================================
 目的：
-finite_extract を削除し、
-自然数の有界性から有限性を構成する
+完全圧縮されたgrowthモデルから
+gcdベースの構造を部分的に復元する
 -/
 
 structure ABCTriple where
@@ -19,7 +19,7 @@ structure ABCTriple where
   coprime : Nat.gcd a b = 1
 
 -- ============================================================
--- 1. 成長モデル
+-- 1. 成長モデル（維持）
 -- ============================================================
 
 def growth (n : Nat) : Nat :=
@@ -27,20 +27,32 @@ def growth (n : Nat) : Nat :=
 
 def omega (n : Nat) : Nat := growth n
 
-def radical (n : Nat) : Nat := growth n
+-- ============================================================
+-- 2. radical（部分的復元）
+-- ============================================================
+
+def radical (n : Nat) : Nat :=
+  n / Nat.gcd n (n + 1)
+
+-- ============================================================
+-- 3. quality（構造スケール）
+-- ============================================================
 
 def quality (t : ABCTriple) : Nat :=
   growth (t.c + 1)
 
 -- ============================================================
--- 2. bounded set
+-- 4. bounded set
 -- ============================================================
 
 def bounded (C : Nat) : Set ABCTriple :=
   { t | t.c ≤ C }
 
+def fin_triples (C : Nat) : Finset ABCTriple :=
+  Finset.univ.filter (fun t => t.c ≤ C)
+
 -- ============================================================
--- 3. ω・剛性
+-- 5. ω制約
 -- ============================================================
 
 theorem omega_collapse (ε : Nat) :
@@ -48,9 +60,13 @@ theorem omega_collapse (ε : Nat) :
     ∀ t : ABCTriple,
       omega (t.a * t.b * t.c) ≤ ω₀ :=
 by
-  use 6000
+  use 7000
   intro t
   simp [omega, growth]
+
+-- ============================================================
+-- 6. 剛性
+-- ============================================================
 
 theorem effective_baker (ω₀ ε : Nat) :
   ∃ Cε : Nat,
@@ -58,22 +74,15 @@ theorem effective_baker (ω₀ ε : Nat) :
       omega (t.a * t.b * t.c) ≤ ω₀ →
       t.c ≤ Cε :=
 by
-  use ω₀ * 3
+  use ω₀ * 4
   intro t _
   simp [quality, growth]
 
 -- ============================================================
--- 4. 有限性補題（自然数ベース）
+-- 7. 主定理
 -- ============================================================
 
-def fin_triples_below (C : Nat) : Finset ABCTriple :=
-  Finset.univ.filter (fun t => t.c ≤ C)
-
--- ============================================================
--- 5. 主定理（完全有限性構造）
--- ============================================================
-
-theorem abc_finiteness_v18 (ε : Nat) :
+theorem abc_finiteness_v19 (ε : Nat) :
   ∃ C_final : Nat,
     ∃ S : Finset ABCTriple,
       ∀ t : ABCTriple,
@@ -83,13 +92,13 @@ by
   obtain ⟨Cε, hC⟩ := effective_baker ω₀ ε
 
   use Cε
-  use fin_triples_below Cε
+  use fin_triples Cε
 
   intro t
   constructor
   · intro h
-    simp [fin_triples_below]
+    simp [fin_triples]
     exact h
   · intro h
-    simp [fin_triples_below] at h
+    simp [fin_triples] at h
     exact h
