@@ -3,6 +3,8 @@ name: Lean 4 Build
 on:
   push:
     branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build:
@@ -17,10 +19,11 @@ jobs:
           curl https://raw.githubusercontent.com/leanprover/elan/master/elan-init.sh -sSf | sh -s -- -y
           echo "$HOME/.elan/bin" >> $GITHUB_PATH
 
-      - name: Update dependencies
+      - name: Get Mathlib Cache
         run: |
-          lake update  # mathlibの依存関係を解決
-          lake exe cache get  # ビルド済みのmathlibを取得（時間を短縮）
+          # 依存関係をダウンロードし、ビルド済みキャッシュを強制取得
+          lake update
+          lake exe cache get
 
       - name: Build project
         run: |
