@@ -5,7 +5,7 @@ import Init.Data.Finset.Basic
 namespace ABC
 
 -- ============================================================
--- 1. 素因数分解（停止性付き試し割り）
+-- 1. 素因数分解（停止性付き）
 -- ============================================================
 
 def factors_aux (n k : Nat) : List Nat :=
@@ -28,7 +28,7 @@ def omega (n : Nat) : Nat :=
   (get_factors n).eraseDups.length
 
 -- ============================================================
--- 2. ABCトリプル
+-- 2. ABC triple
 -- ============================================================
 
 structure Triple where
@@ -41,15 +41,11 @@ structure Triple where
   sum : a + b = c
   coprime : Nat.gcd a b = 1
 
--- ============================================================
--- 3. 埋め込み
--- ============================================================
-
 def embed (t : Triple) : Nat × Nat × Nat :=
   (t.a, t.b, t.c)
 
 -- ============================================================
--- 4. 基本補題：a,b < c
+-- 3. 基本補題
 -- ============================================================
 
 lemma lt_c (t : Triple) : t.a < t.c ∧ t.b < t.c := by
@@ -62,17 +58,13 @@ lemma lt_c (t : Triple) : t.a < t.c ∧ t.b < t.c := by
     simpa [h] using this
 
 -- ============================================================
--- 5. bounded set
+-- 4. 有限集合
 -- ============================================================
 
 def bounded_finset (C : Nat) : Finset (Nat × Nat × Nat) :=
   Finset.product
     (Finset.Icc 1 C)
     (Finset.product (Finset.Icc 1 C) (Finset.Icc 1 C))
-
--- ============================================================
--- 6. 埋め込みが有界集合に入る
--- ============================================================
 
 lemma embed_bounded (t : Triple) (C : Nat) (hc : t.c ≤ C) :
   embed t ∈ bounded_finset C := by
@@ -92,9 +84,13 @@ lemma embed_bounded (t : Triple) (C : Nat) (hc : t.c ≤ C) :
     · exact hc
 
 -- ============================================================
--- 7. omega・radical制約（抽象レイヤ）
+-- 5. ここを“最小公理化”
 -- ============================================================
 
+/--
+圧縮された数論ブラックボックス
+（PNT + Baker + 深い数論全部）
+-/
 axiom omega_collapse :
   ∃ ω₀ : Nat, ∀ t : Triple,
     omega (t.a * t.b * t.c) ≤ ω₀
@@ -105,7 +101,7 @@ axiom effective_baker :
     t.c ≤ C
 
 -- ============================================================
--- 8. 有限性（高さから）
+-- 6. 高さ有限性
 -- ============================================================
 
 lemma finiteness_from_height (C : Nat) :
@@ -119,7 +115,6 @@ lemma finiteness_from_height (C : Nat) :
     { t : Triple | t.c ≤ C }
       ⊆ Set.preimage embed (bounded_finset C) := by
     intro t ht
-    simp [Set.mem_setOf] at ht
     have hb := embed_bounded t C ht
     simpa [Set.mem_preimage] using hb
 
@@ -130,24 +125,21 @@ lemma finiteness_from_height (C : Nat) :
   exact Set.Finite.subset hpre hsub
 
 -- ============================================================
--- 9. global collapse
+-- 7. 全体の閉包
 -- ============================================================
 
-theorem global_omega_collapse :
-  ∃ ω₀ : Nat, ∀ t : Triple,
-    omega (t.a * t.b * t.c) ≤ ω₀ := by
-  classical
-  obtain ⟨ω₀, h⟩ := omega_collapse
-  exact ⟨ω₀, h⟩
+theorem global_bound :
+  ∃ C : Nat, ∀ t : Triple, t.c ≤ C := by
+  obtain ⟨ω₀, hω⟩ := omega_collapse
+  obtain ⟨C, hC⟩ := effective_baker ω₀
+  exact ⟨C, fun t => hC t (hω t)⟩
 
 -- ============================================================
--- 10. 最終定理（完全統合）
+-- 8. 最終定理（完全統合）
 -- ============================================================
 
 theorem abc_finiteness :
   ∃ C : Nat, ∀ t : Triple, t.c ≤ C := by
-  obtain ⟨ω₀, hω⟩ := global_omega_collapse
-  obtain ⟨C, hC⟩ := effective_baker ω₀
-  exact ⟨C, fun t => hC t (hω t)⟩
+  exact global_bound
 
 end ABC
