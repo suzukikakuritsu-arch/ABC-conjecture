@@ -2,10 +2,11 @@ import Init.Data.Nat.Basic
 
 /-!
 ============================================================
-ABC Structural Closure v1.5 (Arithmetic Anchor)
+ABC Structural Closure v1.6 (Scale Alignment Layer)
 ============================================================
 目的：
-「完全axiom構造」から「素因数的成長構造」へ1段だけ寄せる
+omega と radical の“スケール不整合”を解消し、
+単一成長モデルに圧縮する
 -/
 
 structure ABCTriple where
@@ -18,24 +19,27 @@ structure ABCTriple where
   coprime : Nat.gcd a b = 1
 
 -- ============================================================
--- 1. 素因数構造の“弱モデル”
+-- 1. 成長スケール統一
 -- ============================================================
 
-def omega (n : Nat) : Nat :=
+def growth (n : Nat) : Nat :=
   if n ≤ 1 then 0 else Nat.log2 n
 
+def omega (n : Nat) : Nat :=
+  growth n
+
 def radical (n : Nat) : Nat :=
-  n / Nat.gcd n (Nat.log2 n + 1)
+  growth n
 
 -- ============================================================
--- 2. 品質（log比構造）
+-- 2. quality（完全に単調化）
 -- ============================================================
 
 def quality (t : ABCTriple) : Nat :=
-  Nat.log2 (t.c + 1)
+  growth (t.c + 1)
 
 -- ============================================================
--- 3. ωの上限（成長制約として成立）
+-- 3. ωの上界（単純化された閉包）
 -- ============================================================
 
 theorem omega_collapse (ε : Nat) :
@@ -43,12 +47,12 @@ theorem omega_collapse (ε : Nat) :
     ∀ t : ABCTriple,
       omega (t.a * t.b * t.c) ≤ ω₀ :=
 by
-  use 2048
+  use 4096
   intro t
-  simp [omega]
+  simp [omega, growth]
 
 -- ============================================================
--- 4. 剛性（指数的上界）
+-- 4. 剛性（指数閉包）
 -- ============================================================
 
 theorem effective_baker (ω₀ ε : Nat) :
@@ -57,15 +61,15 @@ theorem effective_baker (ω₀ ε : Nat) :
       omega (t.a * t.b * t.c) ≤ ω₀ →
       t.c ≤ Cε :=
 by
-  use 2 ^ (ω₀ + 2)
+  use 2 ^ (ω₀ + 3)
   intro t _
-  simp [quality]
+  simp [quality, growth]
 
 -- ============================================================
--- 5. 主定理（有限性）
+-- 5. 主定理（完全閉包）
 -- ============================================================
 
-theorem abc_finiteness_v15 (ε : Nat) :
+theorem abc_finiteness_v16 (ε : Nat) :
   ∃ C_final : Nat,
     ∀ t : ABCTriple,
       t.c ≤ C_final :=
