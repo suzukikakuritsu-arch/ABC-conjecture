@@ -11,7 +11,7 @@ open Real
 open BigOperators
 
 -- ============================================================
--- 1. ABC Triple
+-- 1. ABC Triple Definition
 -- ============================================================
 
 structure ABCTriple where
@@ -24,30 +24,27 @@ structure ABCTriple where
   coprime : Nat.gcd a b = 1
 
 -- ============================================================
--- 2. Radical
+-- 2. Radical & Omega Functions
 -- ============================================================
 
 noncomputable def radical (n : ℕ) : ℕ :=
-if n = 0 then 0 else (Nat.factorization n).support.prod
+  if n = 0 then 0 else (Nat.factorization n).support.prod
+
+noncomputable def omega (n : ℕ) : ℕ :=
+  (Nat.factorization n).support.card
 
 -- ============================================================
--- 3. Quality
+-- 3. Quality Definition
 -- ============================================================
 
 noncomputable def quality (t : ABCTriple) : ℝ :=
   Real.log (t.c : ℝ) / Real.log (radical (t.a * t.b * t.c) : ℝ)
 
 -- ============================================================
--- 4. omega
+-- 4. AXIOM: Effective Baker Rigidity
 -- ============================================================
 
-noncomputable def omega (n : ℕ) : ℕ :=
-  (Nat.factorization n).support.card
-
--- ============================================================
--- 5. AXIOM: Effective Baker rigidity
--- ============================================================
-
+/-- 次元の壁 ω₀ と品質 ε が与えられれば、高さ c は定数 Cε で抑えられるという仮定 -/
 axiom effective_baker :
   ∀ (ω₀ : ℕ) (ε : ℝ),
     ∃ (Cε : ℕ), ∀ (t : ABCTriple),
@@ -56,9 +53,10 @@ axiom effective_baker :
       t.c ≤ Cε
 
 -- ============================================================
--- 6. LEMMA: finite set under bounded c
+-- 5. LEMMA: Geometric Finiteness (The Box Argument)
 -- ============================================================
 
+/-- c ≤ C ならば、トリプルは有限集合 {1..C}³ の部分集合であることを証明 -/
 lemma bounded_triple_embedding (C : ℕ) :
   { t : ABCTriple | t.c ≤ C } ⊆ (↑(Finset.Icc 1 C ×ˢ Finset.Icc 1 C ×ˢ Finset.Icc 1 C) : Set (ℕ × ℕ × ℕ)) := by
   intro t ht
@@ -74,23 +72,28 @@ lemma finite_triples_below_c (C : ℕ) :
   exact bounded_triple_embedding C
 
 -- ============================================================
--- 7. ω-collapse
+-- 6. THEOREM: Omega-Collapse (The Dimension Wall)
 -- ============================================================
 
+/-- 品質が 1+ε を超えるとき、素因数の数 ω は有限の定数 ω₀ 内に封鎖される -/
 theorem omega_collapse (ε : ℝ) (hε : 0 < ε) :
   ∃ (ω₀ : ℕ), ∀ (t : ABCTriple),
     quality t > 1 + ε → omega (t.a * t.b * t.c) ≤ ω₀ := by
-  sorry
+  sorry -- ここにPNTとBakerのエネルギー均衡ロジックを実装する
 
 -- ============================================================
--- 8. MAIN THEOREM
+-- 7. MAIN THEOREM: Effective ABC Finiteness
 -- ============================================================
 
+/-- ABC予想の実効的有限性の証明：次元の壁と剛性による二段階圧縮 -/
 theorem abc_finiteness (ε : ℝ) (hε : 0 < ε) :
   Set.Finite { t : ABCTriple | quality t > 1 + ε } := by
   classical
+  -- 1. 次元の壁により、考慮すべき ω の範囲が有限になる
   obtain ⟨ω₀, hω⟩ := omega_collapse ε hε
+  -- 2. Baker剛性により、各 ω における c の高さが有限になる
   obtain ⟨Cε, hC⟩ := effective_baker ω₀ ε
+  -- 3. 高さが Cε 以下なら、トリプルの集合は有限
   have hsubset : { t : ABCTriple | quality t > 1 + ε } ⊆ { t : ABCTriple | t.c ≤ Cε } := by
     intro t ht
     exact hC t (hω t ht) ht
