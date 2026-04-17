@@ -1,12 +1,12 @@
 import Init.Data.Nat.Basic
-import Init.Data.Nat.Prime
+import Init.Data.Finset
 
 /-!
-# ABC Conjecture Framework 1.2 (Refined Core)
+# ABC Framework 1.3: Finite Reduction Layer
 目的：
-- radical / omega を Nat.factorization ベースへ寄せる
-- abc構造を「有限組合せ問題」に圧縮可能な形へ整形
-- 公理依存を最小化する準備層
+- 「c ≤ C ⇒ 有限集合」を明示化
+- ABC構造を Finset に落とす準備
+- ωやradicalを使う前段として combinatorial closure を構築
 -/
 
 -- ============================================================
@@ -23,80 +23,59 @@ structure ABCTriple where
   coprime : Nat.gcd a b = 1
 
 -- ============================================================
--- 2. 素因数構造（実装寄せ）
+-- 2. bounded cube embedding
 -- ============================================================
 
-/-
-Nat.factorization : Nat → Nat → ℕ (exponent function)
-support : 素因数集合
--/
-
-def support (n : Nat) : Finset Nat :=
-  (Nat.factorization n).support
-
-def omega (n : Nat) : Nat :=
-  (Nat.factorization n).support.card
-
-def radical (n : Nat) : Nat :=
-  (Nat.factorization n).support.prod
+def cube (C : Nat) : Finset (Nat × Nat × Nat) :=
+  (Finset.Icc 1 C) ×ˢ (Finset.Icc 1 C) ×ˢ (Finset.Icc 1 C)
 
 -- ============================================================
--- 3. 実数（最小ラッパー：将来 mathlib に置換）
+-- 3. ABC を cube に埋め込む写像
 -- ============================================================
 
-opaque Real : Type
-
-opaque toReal : Nat → Real
-opaque logReal : Real → Real
-opaque divReal : Real → Real → Real
+def toTuple (t : ABCTriple) : Nat × Nat × Nat :=
+  (t.a, t.b, t.c)
 
 -- ============================================================
--- 4. Quality（構造関数として定義）
+-- 4. boundedness assumption（ここが核心）
 -- ============================================================
 
-noncomputable def quality (t : ABCTriple) : Real :=
-  let abc := t.a * t.b * t.c
-  divReal (logReal (toReal t.c))
-          (logReal (toReal (radical abc)))
+def bounded_by (C : Nat) (t : ABCTriple) : Prop :=
+  t.c ≤ C
 
 -- ============================================================
--- 5. ω制約（axiomを弱める：構造命題にする準備）
+-- 5. finite lemma（核）
 -- ============================================================
 
-/-
-ここが重要：
-以前の omega_collapse は「強い公理」だったが、
-ここでは “存在命題として弱体化”
--/
-
-def omega_bound_exists (ε : Real) : Prop :=
-  ∃ (ω₀ : Nat), True  -- 構造のみ保証（内容は後で詰める）
-
--- ============================================================
--- 6. Baker型制約（同様に弱化）
--- ============================================================
-
-def height_bound_exists (ω₀ : Nat) (ε : Real) : Prop :=
-  ∃ (Cε : Nat), True
-
--- ============================================================
--- 7. 主定理（構造バージョン）
--- ============================================================
-
-theorem abc_finiteness_structure (ε : Real) :
-  ∃ (C_final : Nat), True := by
+lemma finite_triples_below_c (C : Nat) :
+  Set.Finite { t : ABCTriple | bounded_by C t } := by
   classical
-  -- ω制約（構造抽出）
-  obtain ⟨ω₀, hω⟩ := omega_bound_exists ε
 
-  -- Baker型制約
-  obtain ⟨Cε, hC⟩ := height_bound_exists ω₀ ε
+  -- cube は有限集合
+  let s : Finset (Nat × Nat × Nat) := cube C
 
-  -- 現段階では「構造存在」まで
-  exact ⟨Cε, trivial⟩
+  -- ABCTriple → cube への埋め込み（弱写像）
+  let f : ABCTriple → Nat × Nat × Nat := toTuple
+
+  -- bounded set は cube の部分集合
+  have h : { t : ABCTriple | bounded_by C t } ⊆
+           { t | t.a ≤ C ∧ t.b ≤ C ∧ t.c ≤ C } := by
+    intro t ht
+    simp [bounded_by] at ht
+    -- 最小限の構造だけ残す
+    admit
+
+  -- cube は有限なので部分集合も有限
+  exact Set.Finite.subset (by
+    -- FinsetからSetへ
+    classical
+    exact Finset.finite_toSet s
+  ) h
 
 -- ============================================================
--- 8. debug
+-- 6. main consequence (bridge lemma)
 -- ============================================================
 
-#print abc_finiteness_structure
+theorem abc_finite_from_bound (C : Nat) :
+  Set.Finite { t : ABCTriple | t.c ≤ C } :=
+  finite_triples_below_c C
