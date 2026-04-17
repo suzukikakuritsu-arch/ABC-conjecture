@@ -1,12 +1,12 @@
 import Lake
 open Lake DSL
 
-package "abc_conjecture" where
-  -- パッケージの設定
+package «abc-conjecture» where
+  -- 設定なし
 
 @[default_target]
 lean_lib «AbcConjecture» where
-  -- ライブラリの設定（ファイル名に合わせて変更してください）
+  -- ここがファイル名 (AbcConjecture.lean) と一致している必要があります
 
 require mathlib from git
   "https://github.com/leanprover-community/mathlib4.git"
