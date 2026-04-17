@@ -1,29 +1,27 @@
 import Init.Data.Nat.Basic
 
 /-!
-# ABC Conjecture Formalization (Stable Build v1.1)
+# ABC Conjecture Formalization (Stable Noncomputable Core v1.1)
 -/
 
 set_option compiler.extract_closed false
 
 -- ============================================================
--- 1. 基本型（完全抽象・Lean安全領域）
+-- 1. 完全抽象Real（計算系を完全遮断）
 -- ============================================================
 
 opaque Real : Type
 
-noncomputable axiom Real_inhabited : Inhabited Real
-instance : Inhabited Real := Real_inhabited
-
 opaque Real_le : Real → Real → Prop
-instance : LE Real := ⟨Real_le⟩
-
 opaque Real_add : Real → Real → Real
 opaque Real_mul : Real → Real → Real
 
 opaque toReal : Nat → Real
 opaque logReal : Real → Real
 opaque divReal : Real → Real → Real
+
+-- NOTE:
+-- Inhabitedインスタンスは完全に削除（これが今回のエラー原因）
 
 -- ============================================================
 -- 2. ABC構造
@@ -40,7 +38,7 @@ structure ABCTriple where
   coprime : Nat.gcd a b = 1
 
 -- ============================================================
--- 3. 数論オブジェクト（抽象化）
+-- 3. 数論オブジェクト
 -- ============================================================
 
 opaque radical : Nat → Nat
@@ -51,7 +49,7 @@ noncomputable def quality (t : ABCTriple) : Real :=
   divReal (logReal (toReal t.c)) (logReal (toReal (radical abc)))
 
 -- ============================================================
--- 4. 核心公理（構造保持）
+-- 4. 核心公理
 -- ============================================================
 
 axiom omega_collapse (ε : Real) :
@@ -64,7 +62,7 @@ axiom effective_baker (ω₀ : Nat) (ε : Real) :
     t.c ≤ Cε
 
 -- ============================================================
--- 5. 主定理（安定版）
+-- 5. 主定理（完全安定）
 -- ============================================================
 
 theorem abc_finiteness_logic (ε : Real) :
