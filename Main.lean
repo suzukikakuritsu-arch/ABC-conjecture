@@ -270,3 +270,33 @@ lemma radical_multiplicative_of_coprime (a b : Nat)
   -- 6. radical定義で終了
   simp [radical]
   exact fold_split
+lemma radical_triple_split (t : Triple) :
+  radical (t.a * t.b * t.c)
+    = radical t.a * radical t.b * radical t.c := by
+  classical
+
+  -- まず2項分解を使う
+  have h1 :
+    radical (t.a * t.b * t.c)
+      = radical (t.a * t.b) * radical t.c := by
+  -- gcd(ab, c) = 1 を使う
+    have hcop : Nat.gcd (t.a * t.b) t.c = 1 := by
+      -- Tripleのcoprime構造から
+      exact t.coprime_ac
+
+    exact radical_multiplicative_of_coprime (t.a * t.b) t.c hcop
+
+  -- 次に ab を分解
+  have h2 :
+    radical (t.a * t.b)
+      = radical t.a * radical t.b := by
+    exact radical_multiplicative_of_coprime t.a t.b t.coprime_ab
+
+  -- 代入して整理
+  calc
+    radical (t.a * t.b * t.c)
+        = radical (t.a * t.b) * radical t.c := h1
+    _   = (radical t.a * radical t.b) * radical t.c := by
+          rw [h2]
+    _   = radical t.a * radical t.b * radical t.c := by
+          ring
