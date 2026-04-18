@@ -2,7 +2,7 @@ import Mathlib.Data.Nat.Prime
 import Mathlib.Data.Nat.GCD.Basic
 import Mathlib.Analysis.SpecialFunctions.Log.Basic
 
-/-- 三つ組 (a, b, c) の定義と整合性制約 -/
+/-- 三つ組 (a, b, c) の定義 -/
 structure Triple where
   a : Nat
   b : Nat
@@ -14,18 +14,17 @@ structure Triple where
   coprime : Nat.gcd a b = 1
 
 namespace ABC
-
 open Nat Real
 
-/-- 根基 (radical) の計算可能な定義 -/
+/-- radical の実効的計算 -/
 def radical (n : Nat) : Nat :=
   if n = 0 then 0 else (n.primeFactorsList.eraseDups).foldl (· * ·) 1
 
-/-- 素因数の種類数 ω の計算可能な定義 -/
+/-- 素因数の種類数 ω の計算 -/
 def omega (n : Nat) : Nat :=
   n.primeFactorsList.eraseDups.length
 
-/-- 三つ組の品質 Q の定義 -/
+/-- 品質 Q の実数定義 -/
 noncomputable def quality (t : Triple) : ℝ :=
   log t.c / log (radical (t.a * t.b * t.c))
 
