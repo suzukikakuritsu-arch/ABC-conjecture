@@ -15,15 +15,14 @@ structure Triple where
 namespace ABC
 open Nat Real
 
-/-- 根基 (radical) の決定論的計算 -/
 def radical (n : Nat) : Nat :=
-  if n = 0 then 0 else (n.primeFactorsList.eraseDups).foldl (· * ·) 1
+  if n = 0 then 0 
+  else (n.primeFactorsList.eraseDups).foldl (· * ·) 1
 
-/-- 次元の定義 -/
 def omega (n : Nat) : Nat :=
-  n.primeFactorsList.eraseDups.length
+  (n.primeFactorsList.eraseDups).length
 
-/-- 三つ組の高さ（エネルギー）の評価関数 -/
-noncomputable def log_c (t : Triple) : ℝ := log (t.c : ℝ)
+/-- 実数変換の補助補題 -/
+lemma c_pos_real (t : Triple) : 0 < (t.c : ℝ) := cast_pos.mpr t.pos_c
 
 end ABC
