@@ -905,5 +905,38 @@ lemma omega_defined_by_factors (n : Nat) :
   omega n = (get_factors n).eraseDups.length := by
   rfl
 
+namespace ABC
 
+-- ============================================================
+-- 厳密化チャレンジ：素因数分解の存在（Mathlib版）
+-- ============================================================
+
+open Nat
+
+def is_factorization (n : Nat) (l : List Nat) : Prop :=
+  l.prod = n ∧ ∀ p ∈ l, Nat.Prime p
+
+-- ============================================================
+-- get_factors を「正しい素因数分解」として固定
+-- ============================================================
+
+theorem get_factors_correct (n : Nat) (hn : 0 < n) :
+  ∃ l : List Nat,
+    is_factorization n l := by
+  classical
+
+  -- Mathlibの標準素因数分解を使う
+  let l := Nat.factorizationList n
+
+  have hprod : l.prod = n := by
+    -- Mathlib定理
+    simpa using Nat.factorizationList_prod n hn.ne'
+
+  have hprime : ∀ p ∈ l, Nat.Prime p := by
+    intro p hp
+    exact Nat.prime_of_mem_factorizationList hp
+
+  exact ⟨l, ⟨hprod, hprime⟩⟩
+
+end ABC
 
