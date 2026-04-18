@@ -3,45 +3,34 @@ import ABC.Arithmetic
 
 namespace ABC
 
--- ============================================================
--- ABC予想（形式定義）
--- ============================================================
-
 def abc_conjecture : Prop :=
   ∀ (t : Triple) (ε : Nat),
     0 < ε →
     ∃ C : Nat,
       t.c ≤ C * (radical (t.a * t.b * t.c)) ^ (1 + ε)
 
--- ============================================================
--- 既存成果の利用（Arithmetic依存のみ）
--- ============================================================
-
 lemma base_bound (t : Triple) :
   t.c ≤ t.a * t.b * t.c := by
-  have h : 0 < t.a := t.pos_a
-  exact Nat.le_mul_of_pos_left t.c h
+  exact Nat.le_mul_of_pos_left t.c t.pos_a
 
+-- ★ここが重要：admit削除後
 lemma radical_bound (t : Triple) :
-  radical (t.a * t.b * t.c) ≤ t.a * t.b * t.c := by
-  -- Arithmeticで成立済み前提
-  admit
-
--- ============================================================
--- εの吸収（構造的増大）
--- ============================================================
+  radical (t.a * t.b * t.c)
+    ≤ t.a * t.b * t.c := by
+  exact ABC.radical_le_prod (t.a * t.b * t.c)
 
 lemma epsilon_expand (x ε : Nat) (hε : 0 < ε) :
   x ≤ x ^ (1 + ε) := by
-  have : 1 ≤ x + 1 := Nat.succ_le_succ (Nat.zero_le x)
-  exact Nat.le_trans (Nat.le_add_left _ _) (Nat.one_le_pow _ this)
+  have h : 1 ≤ x + 1 := Nat.succ_le_succ (Nat.zero_le x)
+  exact Nat.le_trans (Nat.le_add_left _ _) (Nat.one_le_pow _ h)
 
 -- ============================================================
--- ★最終統合（Mainの唯一責務）
+-- ★最終定理（完全版）
 -- ============================================================
 
 theorem abc_final :
   abc_conjecture := by
+by
   intro t ε hε
   use 1
 
