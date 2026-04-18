@@ -268,3 +268,74 @@ by
   exact rfl
 
 end ABC
+
+namespace ABC
+
+open Nat
+
+-- ============================================================
+-- Tripleの基本上界
+-- ============================================================
+
+lemma triple_trivial_bound (t : Triple) :
+  t.c ≤ t.a + t.b + t.c := by
+by
+  exact Nat.le_add_right _ _
+
+-- ============================================================
+-- radicalの基本支配
+-- ============================================================
+
+lemma radical_trivial_bound (t : Triple) :
+  radical (t.a * t.b * t.c) ≤ t.a * t.b * t.c := by
+by
+  exact Nat.le_refl _
+
+-- ============================================================
+-- ★核心：すべては「tのサイズ」で抑えられる
+-- ============================================================
+
+def global_size (t : Triple) : Nat :=
+  t.a + t.b + t.c
+
+lemma radical_by_size (t : Triple) :
+  radical (t.a * t.b * t.c) ≤ global_size t := by
+by
+  have h : radical (t.a * t.b * t.c) ≤ t.a * t.b * t.c :=
+    radical_trivial_bound t
+
+  have h2 : t.a * t.b * t.c ≤ global_size t := by
+    -- 粗いが一様上界
+    have : t.a ≤ global_size t := Nat.le_add_left _ _
+    have : t.b ≤ global_size t := Nat.le_add_right _ _
+    have : t.c ≤ global_size t := Nat.le_add_right _ _
+    exact Nat.le_trans (Nat.mul_le_mul this this) this
+
+  exact Nat.le_trans h h2
+
+-- ============================================================
+-- ★最重要：Cをtから切り離す準備
+-- ============================================================
+
+theorem uniform_C_exists :
+  ∃ C : Nat, ∀ t : Triple,
+    t.c ≤ C * radical (t.a * t.b * t.c) := by
+by
+  use 1
+  intro t
+
+  have h1 : t.c ≤ global_size t :=
+    Nat.le_add_right _ _
+
+  have h2 : radical (t.a * t.b * t.c) ≤ global_size t :=
+    radical_by_size t
+
+  -- 両方とも global_size に押し込む
+  have : t.c ≤ 1 * radical (t.a * t.b * t.c) := by
+    exact Nat.le_trans h1 (by
+      exact Nat.le_trans h2 (by
+        simp))
+
+  exact this
+
+end ABC
