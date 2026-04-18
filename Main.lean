@@ -190,3 +190,83 @@ def find_counterexamples (n : Nat) : List Triple :=
     (search_bound n)
 
 end ABC
+lemma radical_multiplicative_of_coprime (a b : Nat)
+  (h : Nat.gcd a b = 1) :
+  radical (a * b) = radical a * radical b := by
+  classical
+
+  -- 1. Euclidの補題（素数版）
+  have euclid :
+    ∀ p : Nat, Nat.Prime p →
+      p ∣ a * b → (p ∣ a ∨ p ∣ b) :=
+    Nat.Prime.dvd_or_dvd
+
+  -- 2. gcd=1なら共通素因子なし
+  have disjoint :
+    ∀ p : Nat, Nat.Prime p →
+      p ∣ a → ¬ p ∣ b := by
+    intro p hp hpa hpb
+    have hdiv : p ∣ Nat.gcd a b :=
+      Nat.Prime.dvd_gcd hp hpa hpb
+    rw [h] at hdiv
+    exact Nat.Prime.not_dvd_one hp hdiv
+
+  -- 3. radicalは「distinct prime product」
+  --    → 集合的に扱う
+
+  have factor_split :
+    ∀ p : Nat,
+      p ∈ get_factors (a * b) ↔
+        (p ∈ get_factors a ∨ p ∈ get_factors b) := by
+    intro p
+    constructor
+    · intro hp
+      have hdiv : p ∣ a * b := by
+        -- factors定義より
+        simp [get_factors] at hp
+        exact hp
+
+      have hp_prime : Nat.Prime p := by
+        -- trial division構造前提
+        -- （ここはCore依存でもOK）
+        exact Nat.prime_of_dvd_prod hdiv
+
+      exact euclid p hp_prime hdiv
+
+    · intro h
+      cases h with
+      | inl ha =>
+          simp [get_factors, ha]
+      | inr hb =>
+          simp [get_factors, hb]
+
+  -- 4. gcd=1で集合はdisjoint union
+  have disj :
+    (get_factors a).eraseDups ∩ (get_factors b).eraseDups = ∅ := by
+    ext p
+    constructor
+    · intro hmem
+      rcases hmem with ⟨ha, hb⟩
+      have hdiv : p ∣ a ∧ p ∣ b := by
+        constructor <;>
+        simp [get_factors] at *
+      have : p ∣ Nat.gcd a b :=
+        Nat.dvd_gcd hdiv.1 hdiv.2
+      rw [h] at this
+      exact Nat.Prime.not_dvd_one (by
+        exact Nat.prime_of_dvd_prod this) this
+    · intro h
+      cases h
+
+  -- 5. foldlはdisjoint unionで分解
+  have fold_split :
+    ((get_factors a).eraseDups ∪ (get_factors b).eraseDups).foldl (· * ·) 1
+      =
+    (get_factors a).eraseDups.foldl (· * ·) 1 *
+    (get_factors b).eraseDups.foldl (· * ·) 1 := by
+    -- ここはList algebra定理（標準補題相当）
+    simp [List.foldl_append]
+
+  -- 6. radical定義で終了
+  simp [radical]
+  exact fold_split
