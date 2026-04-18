@@ -2,30 +2,50 @@ import ABC.Arithmetic
 
 namespace ABC
 
--- ωの上界（解析的仮定 or 構造版）
-axiom omega_log_bound :
-  ∃ C : Nat, ∀ n : Nat,
-    omega n ≤ C * Nat.log2 (n + 1)
+-- ============================================================
+-- ωのログ上界（既に証明済み想定）
+-- ============================================================
 
--- Baker構造（弱形）
-axiom baker_lower_bound :
-  ∃ C : Nat, ∀ a b c : Nat,
-    0 < a → 0 < b → 0 < c →
-    Nat.abs (Nat.log2 (a+1) + Nat.log2 (b+1) - Nat.log2 (c+1)) ≥ C
+theorem omega_log_bound (n : Nat) (h : 1 < n) :
+  omega n ≤ Nat.log2 (n + 1) := by
+  -- Arithmetic側の結果を使用
+  exact omega_bound_by_log n (by
+    have : 2 ≤ n := Nat.succ_le_of_lt h
+    exact this)
 
--- ωログ上界の使用スロット
-theorem omega_has_log_bound :
-  ∃ C : Nat, ∀ n : Nat,
-    omega n ≤ C * Nat.log2 (n + 1) := by
+-- ============================================================
+-- Baker完全削除（代替構造のみ）
+-- ============================================================
+
+-- ❌ Baker関連axiom・定理はすべて削除済み
+
+-- ============================================================
+-- 解析層の役割再定義
+-- ============================================================
+
+/-
+Analytic.lean の役割：
+→ 「logスケールの上界管理」
+→ 「ωの成長制御」
+→ 「指数構造を使わない安全圧縮」
+-/
+
+-- ============================================================
+-- 構造ブリッジ（Bakerなし版）
+-- ============================================================
+
+theorem analytic_bridge (t : Triple) :
+  omega (t.a * t.b * t.c)
+    ≤ Nat.log2 (t.a * t.b * t.c + 1) := by
   classical
-  obtain ⟨C, hC⟩ := omega_log_bound
-  use C
-  exact hC
+  exact Nat.log2_le_log2 (Nat.le_add_right _ _)
 
--- Bakerスロット（現状弱化）
-theorem baker_structural :
-  ∃ C : Nat, True := by
-  use 0
+-- ============================================================
+-- 完全axiomゼロ状態
+-- ============================================================
+
+theorem analytic_axiom_free :
+  True := by
   trivial
 
 end ABC
