@@ -173,3 +173,20 @@ by
     exact Nat.le_refl _)
 
 end ABC
+namespace ABC
+
+def quality (t : Triple) : Nat :=
+  Nat.log2 (t.c + 1) - Nat.log2 (radical (t.a * t.b * t.c) + 1)
+
+def search_bound (n : Nat) : List Triple :=
+  -- 超単純な総当たり（最初はこれでOK）
+  List.filter (fun t =>
+    t.a ≤ n ∧ t.b ≤ n ∧ t.c ≤ n)
+    (allTriples n)
+
+def find_counterexamples (n : Nat) : List Triple :=
+  List.filter (fun t =>
+    radical (t.a * t.b * t.c) < t.c)
+    (search_bound n)
+
+end ABC
