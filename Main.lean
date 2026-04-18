@@ -23,3 +23,42 @@ theorem abc_main :
   exact h2
 
 end ABC
+import ABC.Core
+import ABC.Arithmetic
+import ABC.Analytic
+
+namespace ABC
+
+-- ============================================================
+-- 最終ターゲット（ABC予想）
+-- ============================================================
+
+def abc_conjecture : Prop :=
+  ∀ (t : Triple) (ε : Nat),
+    0 < ε →
+    ∃ C : Nat,
+      t.c ≤ C * (radical (t.a * t.b * t.c)) ^ (1 + ε)
+
+-- ============================================================
+-- Analyticからの橋（前提化）
+-- ============================================================
+
+axiom analytic_bridge :
+  ∀ t : Triple,
+    omega (t.a * t.b * t.c)
+      ≤ Nat.log2 (t.a * t.b * t.c + 1)
+
+-- ============================================================
+-- 最終統合（まだ証明ではなく構造）
+-- ============================================================
+
+theorem abc_final :
+  abc_conjecture := by
+  intro t ε hε
+  use t.c
+
+  -- 現時点では構造接続のみ
+  --（Analyticで全部処理済み前提）
+  admit
+
+end ABC
