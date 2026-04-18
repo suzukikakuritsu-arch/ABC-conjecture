@@ -870,6 +870,40 @@ theorem arithmetic_core_stable :
   trivial
 
 end ABC
+namespace ABC
+
+-- ============================================================
+-- 厳密化チャレンジ①：素因数分解の正当性
+-- ============================================================
+
+def is_prime (p : Nat) : Prop :=
+  p ≥ 2 ∧ ∀ d : Nat, d ∣ p → d = 1 ∨ d = p
+
+def is_factorization (n : Nat) (l : List Nat) : Prop :=
+  (l.prod = n) ∧ (∀ p ∈ l, is_prime p)
+
+-- ============================================================
+-- チャレンジ目標：get_factorsの正当性
+-- ============================================================
+
+theorem get_factors_correct (n : Nat) :
+  ∃ l : List Nat,
+    is_factorization n l := by
+  classical
+  -- ここが本当の核心（今は未証明領域）
+  sorry
+
+end ABC
+
+lemma radical_well_defined (n : Nat) :
+  radical n = (get_factors n).eraseDups.prod := by
+  classical
+  -- 定義依存の固定化
+  rfl
+
+lemma omega_defined_by_factors (n : Nat) :
+  omega n = (get_factors n).eraseDups.length := by
+  rfl
 
 
 
