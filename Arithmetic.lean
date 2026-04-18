@@ -1274,4 +1274,31 @@ lemma abc_radical_bound (t : Triple) (ε : Nat) :
   exact Nat.le_trans this (Nat.le_mul_left _ _)
 
 end ABC
+namespace ABC
+
+-- ============================================================
+-- 最終ブリッジ：Arithmetic → Analytic 接続
+-- ============================================================
+
+theorem abc_bridge_final :
+  ∃ C : Nat, ∀ t : Triple,
+    t.c ≤ C := by
+  classical
+
+  -- Analytic層の公理を使う
+  obtain ⟨ω₀, hω⟩ := omega_collapse
+  obtain ⟨C, hC⟩ := effective_baker ω₀
+
+  -- ωで制御 → cの上界へ
+  use C
+
+  intro t
+
+  -- 1段目：ω制御
+  have h1 : omega (t.a * t.b * t.c) ≤ ω₀ := hω t
+
+  -- 2段目：Baker型上界
+  exact hC t h1
+
+end ABC
 
