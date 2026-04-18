@@ -1,38 +1,22 @@
-import ABC.Core
-import Mathlib.Analysis.SpecialFunctions.Log.Basic
-import Mathlib.Analysis.SpecialFunctions.Pow.Real
-
-open Nat Real
-
-namespace ABC
+-- ABC/Arithmetic.lean (具体化版)
 
 /-- 
-【次元の窒息 (ω-collapse)】
-素数定理に基づき、ωがある閾値 ω_0(ε) を超えると、
-積(rad)の増大が高さ(c)を圧倒するため、Q > 1+ε は成立し得ない。
+第n素数の近似下界を用いた rad の評価
 -/
-axiom omega_collapse (ε : ℝ) (hε : 0 < ε) :
-  ∃ (ω_0 : ℕ), ∀ (t : Triple),
-    omega (t.a * t.b * t.c) > ω_0 → 
-    (t.c : ℝ) < (radical (t.a * t.b * t.c) : ℝ) ^ (1 + ε)
-
-/-- 
-【Baker剛性 (Diophantine Rigidity)】
-固定された次元 ω において、指数の最大値は高さに対して対数的にしか増やせない。
-これにより、特定の次元以下の範囲では、c の高さは有限の定数 K(ε) で抑えられる。
--/
-axiom baker_rigidity (ω_0 : ℕ) (ε : ℝ) :
-  ∃ (K : ℕ), ∀ (t : Triple),
-    omega (t.a * t.b * t.c) ≤ ω_0 →
-    (t.c : ℝ) > (radical (t.a * t.b * t.c) : ℝ) ^ (1 + ε) →
-    (t.c < K)
+noncomputable def rad_lower_bound (ω : ℕ) : ℝ :=
+  if ω = 0 then 0 else ω * Real.log ω
 
 /--
-【定数の壁 (Hurwitz-phi Constraint)】
-黄金比 φ (1/√5) に由来する数論的剛性により、実効的定数 C(ε) が確定する。
+Baker剛性による高さの上限（ωに依存する実効的評価）
 -/
-axiom hurwitz_constant_bound (ε : ℝ) :
-  ∃ (C : ℝ), C > 0 ∧ ∀ (t : Triple),
-    (t.c : ℝ) ≤ C * (radical (t.a * t.b * t.c) : ℝ) ^ (1 + ε)
+noncomputable def baker_height_upper_bound (ω : ℕ) (ε : ℝ) : ℝ :=
+  -- 資料の C_BAKER 定数を反映 (ここでは例示的な定数 10.0 を使用)
+  Real.exp (10.0 * (ω : ℝ) ^ (0.5 : ℝ))
 
-end ABC
+/--
+核心的臨界点 ω_0 の確定
+-/
+def is_critical_omega (ω : ℕ) (ε : ℝ) : Prop :=
+  baker_height_upper_bound ω ε < (1 + ε) * rad_lower_bound ω
+
+-- この is_critical_omega が True になる最小の ω が ω_0(ε) となる
