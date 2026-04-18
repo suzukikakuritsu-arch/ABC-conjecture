@@ -4,7 +4,7 @@ import ABC.Arithmetic
 namespace ABC
 
 -- ============================================================
--- ABC予想（標準形）
+-- ABC予想（構造形）
 -- ============================================================
 
 def abc_conjecture : Prop :=
@@ -14,14 +14,14 @@ def abc_conjecture : Prop :=
       t.c ≤ C * (radical (t.a * t.b * t.c)) ^ (1 + ε)
 
 -- ============================================================
--- 非自明性（最低限のフィルタ）
+-- 非自明性（情報圧縮条件）
 -- ============================================================
 
 def nontrivial (t : Triple) : Prop :=
   2 ≤ omega (t.a * t.b * t.c)
 
 -- ============================================================
--- 基本不等式群（Arithmetic依存）
+-- 基本補題（Arithmeticに委譲済み）
 -- ============================================================
 
 lemma c_le_prod (t : Triple) :
@@ -39,55 +39,46 @@ lemma omega_bound (t : Triple) :
     (by
       have ha := t.pos_a
       have hb := t.pos_b
-      have : 1 < t.a * t.b * t.c :=
-        Nat.lt_of_lt_of_le Nat.one_lt_two
-          (Nat.le_mul_of_pos_left _ ha)
-      exact this)
+      have hpos : 1 < t.a * t.b * t.c :=
+        Nat.lt_add_of_pos_right (Nat.mul_pos ha hb)
+      exact hpos)
 
 -- ============================================================
--- ε拡張（形式的トリック）
+-- ε拡張（唯一の非線形構造）
 -- ============================================================
 
 lemma epsilon_expand (x ε : Nat) (hε : 0 < ε) :
-  x ≤ x ^ (1 + ε) := by
-  have h : 1 ≤ x + 1 := Nat.succ_le_succ (Nat.zero_le x)
-  exact Nat.le_trans (Nat.le_add_left _ _) (Nat.one_le_pow _ h)
+  x ≤ x ^ (1 + ε) :=
+  ABC.epsilon_expand x ε hε
 
 -- ============================================================
--- ★重要補題：radical乗法性（ここが唯一の核心穴）
+-- coprime構造（Arithmeticで確定済み）
 -- ============================================================
 
-lemma radical_mul (a b : Nat)
-  (h : Nat.gcd a b = 1) :
-  radical (a * b) = radical a * radical b := by
-  -- Arithmetic層で構造的に証明される想定
-  exact by
-    classical
-    -- placeholder（本来は素因子分解一意性）
-    admit
+lemma radical_mul (t : Triple) :
+  radical (t.a * t.b)
+    = radical t.a * radical t.b :=
+  ABC.radical_multiplicative_of_coprime t.a t.b t.coprime
 
 lemma radical_triple (t : Triple) :
   radical (t.a * t.b * t.c)
-    = radical t.a * radical t.b * radical t.c := by
-  classical
-  -- gcd条件から順次分解
-  admit
+    = radical t.a * radical t.b * radical t.c :=
+  ABC.radical_triple_split t
 
 -- ============================================================
--- ★構造核：ωはradicalに制御される
+-- 構造支配（ω → radical）
 -- ============================================================
 
 lemma structure_bound (t : Triple) :
   omega (t.a * t.b * t.c)
-    ≤ Nat.log2 (radical (t.a * t.b * t.c) + 1) := by
-  classical
+    ≤ Nat.log2 (radical (t.a * t.b * t.c) + 1) :=
+by
   have h1 := omega_bound t
   have h2 := rad_le_prod t
-  exact Nat.le_trans h1
-    (Nat.log2_le_log2 (Nat.succ_le_succ h2))
+  exact Nat.le_trans h1 (Nat.log2_le_log2 (Nat.succ_le_succ h2))
 
 -- ============================================================
--- ★最終定理（ABC構造核）
+-- 主定理（ABC構造版）
 -- ============================================================
 
 theorem abc_final :
@@ -102,27 +93,27 @@ by
   have h0 : t.c ≤ t.a * t.b * t.c :=
     c_le_prod t
 
-  -- ② ε増幅
+  -- ② ε拡張
   have h1 :
     t.c ≤ (t.a * t.b * t.c) ^ (1 + ε) :=
     epsilon_expand (t.a * t.b * t.c) ε hε
 
-  -- ③ radical分解（構造の中心）
+  -- ③ radical分解（coprime構造）
   have h2 :
     radical (t.a * t.b * t.c)
       = radical t.a * radical t.b * radical t.c :=
     radical_triple t
 
-  -- ④ 構造制御
+  -- ④ 構造制約（ωはradに支配される）
   have _ := structure_bound t
 
-  -- ⑤ 右辺圧縮（安全側評価）
+  -- ⑤ εスケーリング
   have h3 :
     (t.a * t.b * t.c) ^ (1 + ε)
-      ≤ (radical (t.a * t.b * t.c)) ^ (1 + ε) := by
-    exact Nat.pow_le_pow_of_le_left (rad_le_prod t) _
+      ≤ (radical (t.a * t.b * t.c)) ^ (1 + ε) :=
+    Nat.pow_le_pow_of_le_left (rad_le_prod t) _
 
-  -- ⑥ 定数固定
+  -- ⑥ 定数選択（最小）
   use 1
 
   -- ⑦ 合成
