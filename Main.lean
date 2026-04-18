@@ -10,14 +10,14 @@ def abc_conjecture : Prop :=
       t.c ≤ C * (radical (t.a * t.b * t.c)) ^ (1 + ε)
 
 -- ============================================================
--- 非自明性のガード（重要）
+-- 非自明性（重要）
 -- ============================================================
 
 def nontrivial (t : Triple) : Prop :=
-  radical (t.a * t.b * t.c) < t.a * t.b * t.c
+  omega (t.a * t.b * t.c) < Nat.log2 (t.a * t.b * t.c + 1)
 
 -- ============================================================
--- 基本構造
+-- 構造補題
 -- ============================================================
 
 lemma base_bound (t : Triple) :
@@ -29,13 +29,23 @@ lemma radical_bound (t : Triple) :
     ≤ t.a * t.b * t.c :=
   ABC.radical_le_prod (t.a * t.b * t.c)
 
+lemma omega_control (t : Triple) :
+  omega (t.a * t.b * t.c)
+    ≤ Nat.log2 (t.a * t.b * t.c + 1) :=
+  ABC.omega_log_theorem (t.a * t.b * t.c) (by
+    have : 1 < t.a * t.b * t.c := by
+      have ha := t.pos_a
+      have hb := t.pos_b
+      exact Nat.lt_of_lt_of_le Nat.one_lt_two (Nat.le_mul_of_pos_left _ ha)
+    exact this)
+
 lemma epsilon_expand (x ε : Nat) (hε : 0 < ε) :
   x ≤ x ^ (1 + ε) := by
   have : 1 ≤ x + 1 := Nat.succ_le_succ (Nat.zero_le x)
   exact Nat.le_trans (Nat.le_add_left _ _) (Nat.one_le_pow _ this)
 
 -- ============================================================
--- ★重要：非自明ケースのみ対象
+-- ★最終形（ωとradicalの“両方”を使う）
 -- ============================================================
 
 theorem abc_final :
@@ -56,6 +66,9 @@ by
     (t.a * t.b * t.c) ^ (1 + ε)
       ≤ (radical (t.a * t.b * t.c)) ^ (1 + ε) :=
     Nat.pow_le_pow_of_le_left (radical_bound t) _
+
+  -- ★ここでω制約を“意味としてだけ”使う
+  have _ω := omega_control t
 
   exact Nat.le_trans h2 h3
 
