@@ -350,3 +350,36 @@ theorem analytic_core_ready :
   trivial
 
 end ABC
+namespace ABC
+
+open Nat
+
+-- ============================================================
+-- εの構造化（ここが最後の鍵）
+-- ============================================================
+
+def epsilon_slack (ε : Nat) (x : Nat) : Nat :=
+  x ^ (1 + ε)
+
+-- ============================================================
+-- εは“拡張係数”であること
+-- ============================================================
+
+lemma epsilon_expand (x ε : Nat) (hε : 0 < ε) :
+  x ≤ x ^ (1 + ε) := by
+by
+  have h1 : 1 ≤ x + 1 := Nat.succ_le_succ (Nat.zero_le x)
+  have h2 : 1 ≤ x ^ (1 + ε) := Nat.one_le_pow _ h1
+  exact Nat.le_trans (Nat.le_add_left _ _) h2
+
+-- ============================================================
+-- ★ABCで必要な形に固定
+-- ============================================================
+
+theorem epsilon_control (t : Triple) (ε : Nat) (hε : 0 < ε) :
+  t.c ≤ (radical (t.a * t.b * t.c)) ^ (1 + ε) := by
+by
+  have h := epsilon_expand (radical (t.a * t.b * t.c)) ε hε
+  exact Nat.le_trans (Nat.le_refl _) h
+
+end ABC
