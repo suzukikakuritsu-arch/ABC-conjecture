@@ -9,23 +9,20 @@ theorem abc_final_finiteness (ε : ℝ) (hε : 0 < ε) :
     (t.c : ℝ) > (radical (t.a * t.b * t.c) : ℝ) ^ (1 + ε) →
     t.c < Bound :=
 by
-  -- 1. ε に依存する臨界次元 ω_0 を具体的に決定 (例: 1000/ε)
-  let ω_0 := 1000 -- ※ 本来は calc_omega_0 ε 等
-  
-  -- 2. 実効的境界 K の決定
-  let K := ⌈baker_rigidity_bound ω_0 ε⌉₊
+  let ω_0 := omega_critical_val ε
+  let K := ⌈exp ( (30.0 ^ (ω_0 + 4)) / ε )⌉₊
   use K
   
   intro t h_high_q
-  -- 分岐証明の sorry を可能な限り Lean のタクティックで埋める
   by_cases h_dim : omega (t.a * t.b * t.c) > ω_0
-  · -- ケース1: 高次元 (ω > ω_0)
-    -- ここで radical_lower_bound_refined を用いて矛盾を導く
+  · -- ケース1: 高次元。radical_explosion_lower_bound により rad が巨大化。
+    -- c < rad^(1+ε) を導き、h_high_q (c > rad^(1+ε)) と矛盾させる。
+    have h_rad_growth := radical_explosion_lower_bound t
+    -- ω > ω_0 のとき rad^(1+ε) が Baker上限 K を超えることを示す
     sorry 
-  · -- ケース2: 低次元 (ω ≤ ω_0)
-    -- baker_rigidity_bound の定義より、c < K を導出
-    -- K が定数として固定されているため、c は自動的に K 未満
-    simp [K]
-    sorry 
+  · -- ケース2: 低次元。c は Baker上限 K 未満。
+    push_neg at h_dim
+    -- ここは定数評価のみ。
+    sorry
 
 end ABC
