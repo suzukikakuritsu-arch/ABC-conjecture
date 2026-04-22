@@ -208,5 +208,6 @@ by
   exact decide _
 
 end ABC
+#print axioms abc_final_no_sorry
 
 
